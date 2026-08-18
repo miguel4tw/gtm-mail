@@ -178,6 +178,20 @@ renderer refuses em/en dashes (a tell of generated copy — they can change `DAS
   back within minutes.
 - Rerunning a batch is always safe: `(campaign, recipient)` pairs already in
   `out/send_log.jsonl` are skipped.
+- **Follow-ups** (touches 2+ typically capture ~40% of all replies — do not skip them):
+  `python3 gmail_followup.py templates/<campaign>.json` lists who is due a nudge, from
+  the template's `followups` section. Dry run first, always; then `--send`. Rules the
+  code enforces and you should not fight: run `gmail_watch.py` first (only "open"
+  threads are eligible, and each thread is re-checked for inbound mail just before
+  sending); follow-ups go into the same thread, plain text, no links; `followup_stage`
+  means a rerun never repeats a touch; caps count initial sends and follow-ups together.
+  Help the user write follow-up bodies that add something new each touch — a detail
+  held back from touch 1, an easy out on the last touch — never "just bumping this".
+- **Thread lifecycle** (`out/thread_status.json`): threads are open until they get a
+  reply, a bounce, an opt-out, or `CLOSE_AFTER_DAYS` (default 30, env
+  `GTM_MAIL_CLOSE_DAYS`) of silence. The watcher and follow-up sender skip everything
+  not open, so their cost tracks active conversations, not history. To deliberately
+  reopen a thread, edit its state back to "open".
 
 ## Troubleshooting
 

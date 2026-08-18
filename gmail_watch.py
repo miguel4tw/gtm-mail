@@ -24,8 +24,9 @@ import re
 from datetime import datetime, timezone
 
 from gmail_common import (
-    OUT, assert_identity, build_service, load_credentials,
-    load_senders, read_send_log, token_path,
+    CLOSE_AFTER_DAYS, OUT, assert_identity, build_service, days_since,
+    ensure_thread_status, load_credentials, load_senders, load_thread_status,
+    read_send_log, save_thread_status, token_path,
 )
 
 SEEN_FILE = os.path.join(OUT, "replies_seen.json")
@@ -87,12 +88,13 @@ def check_thread(service, record, sender_email, seen):
             events.append({"kind": "bounce", "date": ts})
         else:
             seen[msg["id"]] = "reply"
+            no = bool(EXPLICIT_NO.search(snippet))
             update = {"email_replied_date": ts}
-            if EXPLICIT_NO.search(snippet):
+            if no:
                 update["not_interested"] = True
             stage_crm(record, update)
             events.append({"kind": "reply", "date": ts, "from": from_hdr,
-                           "snippet": snippet[:300]})
+                           "snippet": snippet[:300], "not_interested": no})
     return events
 
 
@@ -107,12 +109,15 @@ def main():
         print("send_log is empty - nothing to watch.")
         return
     seen = json.load(open(SEEN_FILE)) if os.path.exists(SEEN_FILE) else {}
+    status = load_thread_status()
 
     findings = []
+    skipped_closed = closed_now = 0
     for key, meta in senders.items():
         if args.sender and key != args.sender.lower():
             continue
-        records = [r for r in log if r["sender"] == key]
+        # one record per thread - follow-ups share the initial send's thread
+        records = [r for r in log if r["sender"] == key and r.get("kind") != "followup"]
         if not records:
             continue
         if not os.path.exists(token_path(key)):
@@ -121,15 +126,35 @@ def main():
         service = build_service(load_credentials(key))
         assert_identity(service, key, meta["email"])
         for record in records:
-            for ev in check_thread(service, record, meta["email"], seen):
+            st = ensure_thread_status(status, record)
+            if st["state"] != "open":
+                skipped_closed += 1
+                continue
+            events = check_thread(service, record, meta["email"], seen)
+            for ev in events:
                 findings.append(dict(ev, name=record["name"],
                                      recipient=record["recipient"], sender=key))
+                st["last_touch"] = datetime.now(timezone.utc).isoformat()
+                if ev["kind"] == "bounce":
+                    st["state"] = "bounced"
+                elif ev.get("not_interested"):
+                    st["state"] = "not_interested"
+                else:
+                    st["state"] = "replied"
+            # quiet too long: this fetch was its final check, close it
+            if st["state"] == "open" and days_since(st["last_touch"]) > CLOSE_AFTER_DAYS:
+                st["state"] = "closed_quiet"
+                st["closed_at"] = datetime.now(timezone.utc).isoformat()
+                closed_now += 1
 
     os.makedirs(OUT, exist_ok=True)
     json.dump(seen, open(SEEN_FILE, "w"), indent=1)
     json.dump(findings, open(LATEST_FILE, "w"), indent=1)
+    save_thread_status(status)
 
-    print(f"\n=== {len(findings)} new event(s) ===")
+    active = sum(1 for s in status.values() if s["state"] == "open")
+    print(f"\n=== {len(findings)} new event(s) | {active} threads active | "
+          f"{skipped_closed} resolved skipped | {closed_now} closed quiet ===")
     for ev in findings:
         line = f"  [{ev['kind'].upper()}] {ev['name']} <{ev['recipient']}> via {ev['sender']} on {ev['date']}"
         if ev["kind"] == "reply":

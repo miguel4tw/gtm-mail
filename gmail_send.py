@@ -29,7 +29,8 @@ from email.mime.text import MIMEText
 
 from gmail_common import (
     OUT, append_send_log, assert_identity, build_service, die,
-    load_credentials, load_senders, read_send_log,
+    load_credentials, load_senders, load_thread_status, read_send_log,
+    save_thread_status,
 )
 
 DASHES = re.compile(r"[–—]")  # en dash, em dash - swap in your own copy tells
@@ -174,6 +175,10 @@ def main():
             "theme": theme,
         }
         append_send_log(record)   # Guarantee 5: log immediately after send.
+        status = load_thread_status()
+        status[resp["threadId"]] = {"state": "open", "last_touch": record["sent_at"],
+                                    "followup_stage": 0}
+        save_thread_status(status)
         stage_crm(lead, campaign)
         log.append(record)
         already.add((campaign, lead["email"].lower()))

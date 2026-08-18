@@ -89,11 +89,31 @@ token is broad; the code must not be.
   once did things that were never asked.)
 - **Replies are answered by humans.** The watcher surfaces; it never sends.
 
+## Thread lifecycle
+
+`out/send_log.jsonl` is append-only audit and never mutates; state lives next to it in
+`out/thread_status.json` (`open` / `replied` / `not_interested` / `bounced` /
+`closed_quiet`). The watcher and follow-up sender skip anything not open, and quiet
+threads close after `CLOSE_AFTER_DAYS` (default 30) with one final check as they cross
+the threshold. Without this, watching costs grow with all history forever; with it, cost
+tracks active conversations.
+
+## Follow-ups: human-gated, never automatic
+
+Touches 2+ typically capture ~40% of all replies, so `gmail_followup.py` exists — but it
+holds the same line as everything else. It renders nudges from the template's
+`followups` section into the *same Gmail thread* (`In-Reply-To`/`References`), plain
+text with no links (a second touch without links inboxes better), behind the identical
+dry-run gate and daily caps. Only open threads are eligible, each thread is re-fetched
+for inbound mail just before sending, and `followup_stage` makes reruns idempotent. The
+human approves every batch; the tool's contribution is that a follow-up stops being
+forgotten, not that it becomes automatic.
+
 ## What's deliberately absent
 
-- **No auto-follow-ups.** Follow-ups are a copy decision per lead. If you must, add a
-  `followups` template section and a `--followup` mode — but keep the human deciding who
-  gets one.
+- **No auto-sent follow-ups.** The follow-up sender proposes; a human runs `--send`
+  after seeing the dry run, every time. Scheduling it unattended is the first step back
+  toward the sequencer.
 - **No web UI, no server, no database.** State is three flat files and your CRM. When a
   team outgrows that, it migrates a clean audit log instead of a mystery.
 - **No shared credentials.** One mailbox, one token, revocable by its owner. When someone

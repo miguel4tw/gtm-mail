@@ -44,9 +44,13 @@ setup manual — every step works as human instructions too.
   ordered guarantees: identity asserted before anything sends; `(campaign, recipient)`
   idempotency so reruns can't double-send; per-sender daily caps counted from the log;
   copy rules enforced by code; send → log → stage, in that order.
-- `gmail_watch.py` checks only the threads in the send log, classifies replies and
+- `gmail_watch.py` checks only the open threads in the send log, classifies replies and
   bounces, and stages CRM updates in a reviewable JSONL. It never lists a mailbox and
-  never auto-replies.
+  never auto-replies. Threads that resolve — or go 30 days quiet — close, so watching
+  cost tracks active conversations, not history.
+- `gmail_followup.py` proposes human-gated follow-ups (touches 2+ typically capture
+  ~40% of replies): same thread, plain text, no links, dry-run gate, and a pre-send
+  re-check so anyone who just replied never gets nudged.
 - `out/send_log.jsonl`: an append-only audit trail joining every send to its Gmail thread
   and your CRM record.
 - `deliverability.py`: the preflight a deliverability SaaS would sell you — SPF/DKIM/
@@ -55,8 +59,9 @@ setup manual — every step works as human instructions too.
 
 ## What's deliberately absent
 
-No auto-follow-ups, no web UI, no database, no shared credentials. The moment a tool
-auto-replies as a person, you've rebuilt the sequencer you were avoiding.
+No auto-*sent* follow-ups (a human approves every batch), no web UI, no database, no
+shared credentials. The moment a tool auto-replies as a person, you've rebuilt the
+sequencer you were avoiding.
 
 ## Requirements
 
