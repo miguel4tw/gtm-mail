@@ -15,7 +15,7 @@ you didn't ask.
 **1. With Claude Code (recommended) — it guides you through everything.**
 
 ```bash
-git clone https://github.com/YOUR_USER/gtm-mail ~/.claude/skills/gtm-mail
+git clone https://github.com/miguel4tw/gtm-mail ~/.claude/skills/gtm-mail
 ```
 
 Then in Claude Code: `/gtm-mail` (or just say "set up gtm-mail"). The agent walks you
