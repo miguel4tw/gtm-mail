@@ -1,0 +1,5 @@
+{
+  "_comment": "Copy to senders.json and fill in your team. authorize.py asserts the OAuth token's real address matches `email`, so a wrong entry fails loud at authorize time, never at send time. daily_cap counts REAL sends per calendar day from the send log. Ramp guidance: a mailbox with no cold-send history starts at 5/day, +5 each week, cap ~25.",
+  "alice": {"email": "alice@example.com", "name": "Alice", "daily_cap": 25},
+  "bob": {"email": "bob@example.com", "name": "Bob", "daily_cap": 5}
+}

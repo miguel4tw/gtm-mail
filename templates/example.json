@@ -1,0 +1,28 @@
+{
+  "_comment": "Copy to templates/<campaign>.json. theme_rules map a recipient's job title to one message theme (first regex match wins, order most-specific first). openers/signoffs carry each sender's voice; closers rotate so a batch never reads as one blast. The renderer refuses em/en dashes in any rendered body.",
+  "campaign": "example",
+  "subject": "Coffee in <your city>",
+  "theme_rules": [
+    {"theme": "security", "pattern": "security|ciso"},
+    {"theme": "exec", "pattern": "chief|vp|director"},
+    {"theme": "default", "pattern": ""}
+  ],
+  "theme_lines": {
+    "security": "<the one-line angle for security people>",
+    "exec": "<the one-line angle for executives>",
+    "default": "<the general one-line angle>"
+  },
+  "openers": {
+    "alice": "<Alice's one-sentence opener, in her voice.>",
+    "bob": "<Bob's one-sentence opener, in his voice.>"
+  },
+  "middle": "<one sentence that carries the offer>",
+  "closers": [
+    "<ask, variant one>",
+    "<ask, variant two>"
+  ],
+  "signoffs": {
+    "alice": {"text": "Alice\nExampleCo", "html": "Alice<br><a href=\"https://example.com\">ExampleCo</a>"},
+    "bob": {"text": "Bob\nExampleCo", "html": "Bob<br><a href=\"https://example.com\">ExampleCo</a>"}
+  }
+}

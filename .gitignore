@@ -1,0 +1,6 @@
+secrets/
+out/
+senders.json
+templates/*.json
+!templates/example.json
+__pycache__/
