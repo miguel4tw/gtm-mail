@@ -109,6 +109,22 @@ online at once — the code expires in minutes:
 This is safe over chat: only a single-use, minutes-lived authorization code crosses the
 wire, useless without the client secret and PKCE verifier that never leave this machine.
 
+Field-tested failure modes, in the order they bite:
+
+- **Teammate gets a generic 400 ("malformed... should not be retried") after picking
+  their account** → the auth URL was mangled in transit. Chat apps can truncate or
+  rewrite long URLs. Fix: **email the link instead** and have them click it directly
+  from the email — email clients don't rewrite URLs. Verify first that the URL is intact
+  by opening the sent copy on this machine (stop at the consent screen; don't approve).
+- **Consent processed under the wrong Google account** (`authuser=0` in the error URL,
+  multiple signed-in accounts) → have them use an incognito window signed in ONLY as
+  their work account.
+- **They copied the wrong URL back** — the consent-page URL instead of the localhost
+  one. The URL to copy exists only *after* clicking Allow, in the address bar of the
+  broken localhost page. Old consent URLs are one-shot; reopening one always 400s.
+- If the returned localhost URL is pasted to an agent instead of a browser, delivering
+  it with `curl "<url>"` on this machine works identically.
+
 ## Phase 5 — First-run checklist (sequential; nothing real until step 5)
 
 1. **Dry run.** Build a small test batch (JSON list: `name`, `title`, `company`,
