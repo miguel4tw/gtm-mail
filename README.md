@@ -1,14 +1,15 @@
 # gtm-mail
 
-Outbound campaign email from your team's **own Gmail mailboxes** — no sequencer SaaS, no
-shared credentials, no server. ~400 lines of Python: a sender with hard safety guarantees
-(dry-run default, identity assertion, idempotency, daily caps) and a watcher that follows
-only the threads it sent, surfacing replies and bounces for a human to act on.
+**The alternative to Instantly or HeyReach for small teams that don't need the volume.**
+Sequencers are built for thousands of sends a month; if you're doing tens a day, you're
+paying for scale you don't use and giving up control you do need. gtm-mail sends outbound
+from your team's **own Gmail mailboxes** — no SaaS subscription, no shared credentials, no
+server. ~400 lines of Python you can read in full.
 
-Built for small teams doing manual-quality outbound at small volume — tens of sends a day,
-not thousands. If you need thousands, buy a sequencer. If you need trust, build this: real
-mailboxes, real threads, an append-only audit log, and zero chance the tool does something
-you didn't ask.
+What you get: a sender with hard safety guarantees (dry-run default, identity assertion,
+idempotency, daily caps) and a watcher that follows only the threads it sent, surfacing
+replies and bounces for a human to act on. Real mailboxes, real threads, an append-only
+audit log, and zero chance the tool does something you didn't ask.
 
 ## Three ways to use this repo
 
