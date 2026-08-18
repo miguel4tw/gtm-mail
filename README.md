@@ -49,6 +49,9 @@ setup manual — every step works as human instructions too.
   never auto-replies.
 - `out/send_log.jsonl`: an append-only audit trail joining every send to its Gmail thread
   and your CRM record.
+- `deliverability.py`: the preflight a deliverability SaaS would sell you — SPF/DKIM/
+  DMARC/Spamhaus checks for your domain, plus a placement check that asks Gmail directly
+  whether a logged send landed in INBOX, PROMOTIONS, or SPAM for seeds you own.
 
 ## What's deliberately absent
 

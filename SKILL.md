@@ -125,20 +125,34 @@ Field-tested failure modes, in the order they bite:
 - If the returned localhost URL is pasted to an agent instead of a browser, delivering
   it with `curl "<url>"` on this machine works identically.
 
-## Phase 5 — First-run checklist (sequential; nothing real until step 5)
+## Phase 5 — First-run checklist (sequential; nothing real until step 6)
 
-1. **Dry run.** Build a small test batch (JSON list: `name`, `title`, `company`,
+1. **Deliverability preflight.** `python3 deliverability.py dns <their-domain>` — SPF,
+   DKIM, DMARC, and Spamhaus must pass before anything sends; broken auth means every
+   send lands in spam and nobody tells you. Note anything unexpected in the SPF record
+   (other services sending as this domain share its reputation). `p=none` DMARC is fine
+   to start; enforcement is a later, deliberate upgrade.
+2. **Dry run.** Build a small test batch (JSON list: `name`, `title`, `company`,
    `email`, `sender`) and run
    `python3 gmail_send.py <batch.json> templates/example.json`. Show the user the output.
-2. **Test send to self.** One-lead batch pointing at the user's own address; run with
+3. **Test send to self.** One-lead batch pointing at the user's own address; run with
    `--send`. Confirm it arrives and renders correctly (check the HTML signoff link).
-3. **Reply test.** Have the user reply to the test email, then run
+4. **Reply test.** Have the user reply to the test email, then run
    `python3 gmail_watch.py`. Confirm the reply is surfaced.
-4. **Bounce test.** Send one to a nonsense address at a real domain (e.g.
+5. **Bounce test.** Send one to a nonsense address at a real domain (e.g.
    `nobody-xyz123@gmail.com`), wait a few minutes, run the watcher, confirm the bounce is
    caught.
-5. **First real batch.** Only now, with the campaign template written (Phase 6), the
+6. **First real batch.** Only now, with the campaign template written (Phase 6), the
    dry run inspected, and the cap respected. Start with one sender.
+
+**Content spam-score (do once per template, including every new campaign):** open
+mail-tester.com, copy the seed address it shows, send the rendered template to it through
+the real pipeline (one-lead batch, campaign renamed to `delivtest` so the send log stays
+clean — delete the delivtest log lines after), then check the score page. Aim for 10/10;
+anything it flags is cheaper to fix before the first real send than after. The team's own
+org mailboxes are also permanent free seeds:
+`python3 deliverability.py placement` asks Gmail directly whether a logged send landed in
+INBOX, PROMOTIONS, or SPAM for any recipient that is one of your own senders.
 
 ## Phase 6 — Campaign template
 
